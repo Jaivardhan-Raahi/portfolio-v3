@@ -37,8 +37,8 @@ export const Window: React.FC<WindowProps> = ({
           : `translate3d(${win.position.x}px, ${win.position.y}px, 0)`,
         width: win.isMaximized ? '100%' : `${win.size.width}px`,
         height: win.isMaximized ? 'calc(100% - 48px)' : `${win.size.height}px`,
-        top: win.isMaximized ? 0 : undefined,
-        left: win.isMaximized ? 0 : undefined,
+        top: 0,
+        left: 0,
         position: 'absolute'
       }}
       className={`flex flex-col rounded-xl overflow-hidden os-window-shadow border transition-shadow duration-150 ${

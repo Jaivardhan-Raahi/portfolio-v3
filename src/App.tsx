@@ -188,62 +188,48 @@ export const App: React.FC = () => {
     }
 
     setStartMenuOpen(false);
-    const existing = activeWindows.find(w => w.id === appId);
-    const nextZ = topZ + 1;
-    setTopZ(nextZ);
 
-    if (existing) {
-      setActiveWindows(prev => prev.map(w => w.id === appId ? { ...w, isMinimized: false, zIndex: nextZ } : w));
-      setFocusedWindowId(appId);
-    } else {
-      const offset = (activeWindows.length % 5) * 28;
-      const defaultWidth = Math.min(window.innerWidth - 60, appId === 'terminal' ? 720 : (appId === 'projects' ? 940 : 840));
-      const defaultHeight = Math.min(window.innerHeight - 120, appId === 'terminal' ? 480 : 620);
-      const newWin: WindowState = {
-        id: appId,
-        zIndex: nextZ,
-        isMinimized: false,
-        isMaximized: false,
-        position: { x: Math.max(20, 60 + offset), y: Math.max(20, 40 + offset) },
-        size: { width: defaultWidth, height: defaultHeight }
-      };
-      setActiveWindows(prev => [...prev, newWin]);
-      setFocusedWindowId(appId);
+    setActiveWindows(prev => {
+      const highestZ = Math.max(...prev.map(w => w.zIndex), 10) + 1;
+      const existing = prev.find(w => w.id === appId);
 
-      const appDef = APP_DEFINITIONS.find(a => a.id === appId);
-      if (appDef && appId !== 'about') {
-        addNotification(`Launched ${appDef.title}`, appDef.short, appDef.icon);
+      if (existing) {
+        return prev.map(w => w.id === appId ? { ...w, isMinimized: false, zIndex: highestZ } : w);
+      } else {
+        const offset = (prev.length % 5) * 32;
+        const defaultWidth = Math.min(window.innerWidth - 60, appId === 'terminal' ? 720 : (appId === 'projects' ? 940 : 840));
+        const defaultHeight = Math.min(window.innerHeight - 120, appId === 'terminal' ? 480 : 620);
+        const newWin: WindowState = {
+          id: appId,
+          zIndex: highestZ,
+          isMinimized: false,
+          isMaximized: false,
+          position: { x: Math.max(40, 80 + offset), y: Math.max(30, 50 + offset) },
+          size: { width: defaultWidth, height: defaultHeight }
+        };
+        return [...prev, newWin];
       }
+    });
+
+    setFocusedWindowId(appId);
+
+    const appDef = APP_DEFINITIONS.find(a => a.id === appId);
+    if (appDef && appId !== 'about') {
+      addNotification(`Launched ${appDef.title}`, appDef.short, appDef.icon);
     }
-  }, [activeWindows, isMobile, topZ, addNotification]);
+  }, [isMobile, addNotification]);
 
   const closeWindow = useCallback((appId: string) => {
     sound.playClick();
     setActiveWindows(prev => prev.filter(w => w.id !== appId));
-    if (focusedWindowId === appId) {
-      const remaining = activeWindows.filter(w => w.id !== appId);
-      if (remaining.length > 0) {
-        const highest = remaining.reduce((prev, curr) => (curr.zIndex > prev.zIndex) ? curr : prev, remaining[0]);
-        setFocusedWindowId(highest.id);
-      } else {
-        setFocusedWindowId(null);
-      }
-    }
-  }, [activeWindows, focusedWindowId]);
+    setFocusedWindowId(prevId => (prevId === appId ? null : prevId));
+  }, []);
 
   const minimizeWindow = useCallback((appId: string) => {
     sound.playClick();
     setActiveWindows(prev => prev.map(w => w.id === appId ? { ...w, isMinimized: true } : w));
-    if (focusedWindowId === appId) {
-      const remainingVisible = activeWindows.filter(w => w.id !== appId && !w.isMinimized);
-      if (remainingVisible.length > 0) {
-        const highest = remainingVisible.reduce((prev, curr) => (curr.zIndex > prev.zIndex) ? curr : prev, remainingVisible[0]);
-        setFocusedWindowId(highest.id);
-      } else {
-        setFocusedWindowId(null);
-      }
-    }
-  }, [activeWindows, focusedWindowId]);
+    setFocusedWindowId(prevId => (prevId === appId ? null : prevId));
+  }, []);
 
   const toggleMaximize = useCallback((appId: string) => {
     sound.playClick();
@@ -251,12 +237,12 @@ export const App: React.FC = () => {
   }, []);
 
   const focusWindow = useCallback((appId: string) => {
-    if (focusedWindowId === appId) return;
-    const nextZ = topZ + 1;
-    setTopZ(nextZ);
     setFocusedWindowId(appId);
-    setActiveWindows(prev => prev.map(w => w.id === appId ? { ...w, zIndex: nextZ, isMinimized: false } : w));
-  }, [focusedWindowId, topZ]);
+    setActiveWindows(prev => {
+      const highestZ = Math.max(...prev.map(w => w.zIndex), 10) + 1;
+      return prev.map(w => w.id === appId ? { ...w, zIndex: highestZ, isMinimized: false } : w);
+    });
+  }, []);
 
   const handleWindowDrag = (e: React.MouseEvent, winId: string) => {
     const target = e.target as HTMLElement;

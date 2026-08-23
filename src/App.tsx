@@ -504,7 +504,7 @@ export const App: React.FC = () => {
       <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <div
-        className="relative flex-1 p-6 z-0 overflow-hidden"
+        className="relative flex-1 p-6 z-0"
         onClick={() => setSelectedIconId(null)}
       >
         <div className="grid grid-flow-col grid-rows-6 gap-3 w-max select-none">
@@ -546,29 +546,31 @@ export const App: React.FC = () => {
           <div>Uptime: {profileData.stats.uptime}</div>
         </div>
 
-        {activeWindows.map(win => {
-          const appDef = APP_DEFINITIONS.find(a => a.id === win.id);
-          if (!appDef || win.isMinimized) return null;
-          const isFocused = focusedWindowId === win.id;
-
-          return (
-            <Window
-              key={win.id}
-              win={win}
-              appDef={appDef}
-              isFocused={isFocused}
-              onFocus={() => focusWindow(win.id)}
-              onClose={() => closeWindow(win.id)}
-              onMinimize={() => minimizeWindow(win.id)}
-              onMaximize={() => toggleMaximize(win.id)}
-              onDragStart={(e) => handleWindowDrag(e, win.id)}
-              onResizeStart={(e, dir) => handleWindowResize(e, win.id, dir)}
-            >
-              {renderAppContent(win.id)}
-            </Window>
-          );
-        })}
       </div>
+
+      {/* Windows are rendered at the root OS level, not inside the clipped desktop div */}
+      {activeWindows.map(win => {
+        const appDef = APP_DEFINITIONS.find(a => a.id === win.id);
+        if (!appDef || win.isMinimized) return null;
+        const isFocused = focusedWindowId === win.id;
+
+        return (
+          <Window
+            key={win.id}
+            win={win}
+            appDef={appDef}
+            isFocused={isFocused}
+            onFocus={() => focusWindow(win.id)}
+            onClose={() => closeWindow(win.id)}
+            onMinimize={() => minimizeWindow(win.id)}
+            onMaximize={() => toggleMaximize(win.id)}
+            onDragStart={(e) => handleWindowDrag(e, win.id)}
+            onResizeStart={(e, dir) => handleWindowResize(e, win.id, dir)}
+          >
+            {renderAppContent(win.id)}
+          </Window>
+        );
+      })}
 
       <div className="absolute top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
         {notifications.map(notif => (
